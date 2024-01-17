@@ -1,2 +1,2 @@
 # Wordle
-IS 401 Project 1
+<!-- IS 401 Project 1 -->
