@@ -15,6 +15,9 @@ def wordle():
     # Choose a random word and store it as a variable
     random_word = random.choice(FIVE_LETTER_WORDS).upper()
 
+    # Print the random word to the console for debugging                                       DELETE LATER
+    print("Debug: The chosen word is", random_word)
+
     def enter_action(s):
         # Remove spaces
         s = s.strip().lower()
