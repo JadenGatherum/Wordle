@@ -97,9 +97,6 @@ class WordleGWindow:
 
         def key_action(tke):
 
-            # DEBUG FOR MACS -- DELETE LATER
-            print(f"Character: {tke.char}, Key Symbol: {tke.keysym}")
-
             if isinstance(tke, str):
                 ch = tke.upper()
             else:
