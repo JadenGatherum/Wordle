@@ -96,21 +96,26 @@ class WordleGWindow:
                                  MESSAGE_Y)
 
         def key_action(tke):
+
+            # DEBUG FOR MACS -- DELETE LATER
+            print(f"Character: {tke.char}, Key Symbol: {tke.keysym}")
+
             if isinstance(tke, str):
                 ch = tke.upper()
             else:
                 ch = tke.char.upper()
-            if ch == "\007" or ch == "\177" or ch == "\b" or ch == "DELETE":
+                keysym = tke.keysym
+            if keysym == "BackSpace" or ch == "\007" or ch == "\177" or ch == "\b" or ch == "DELETE":
                 self.show_message("")
                 if self._row < N_ROWS and self._col > 0:
                     self._col -= 1
                     sq = self._grid[self._row][self._col]
                     sq.set_letter(" ")
-            elif ch == "\r" or ch == "\n" or ch == "ENTER" or ch == "RETURN":
+            elif keysym == "Return" or ch == "\r" or ch == "\n" or ch == "ENTER":
                 self.show_message("")
                 s = ""
                 for col in range(N_COLS):
-                    s += self._grid[self._row][col].get_letter();
+                    s += self._grid[self._row][col].get_letter()
                 for fn in self._enter_listeners:
                     fn(s)
             elif ch.isalpha():
