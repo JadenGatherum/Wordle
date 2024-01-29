@@ -89,7 +89,6 @@ def wordle():
             # End game
             gw.show_message("Congratulations! You guessed the word.", CORRECT_COLOR)
             gw._root.after(2000, gw.end_screen)
-            # gw.end_game()
             return
         else:
             # This fills in all the unknown squares to missing
@@ -107,8 +106,8 @@ def wordle():
 
             # End game
             gw.show_message("Game over! The word was " + random_word)
+            gw.num_guesses += 1
             gw._root.after(2000, gw.end_screen)
-            # gw.end_game()
             return
 
     gw = WordleGWindow()
