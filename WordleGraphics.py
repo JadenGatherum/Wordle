@@ -119,7 +119,7 @@ class WordleGWindow:
                                  MESSAGE_Y)
 
         def key_action(tke):
-
+            keysym = None
             if isinstance(tke, str):
                 ch = tke.upper()
             else:
@@ -247,14 +247,6 @@ class WordleGWindow:
             self._row += 1  # Move to the next row
             self._col = 0  # Reset column index to the start of the row
 
-    # def update_key_colors(self, current_word, user_guesses):                                  CREATE LATER
-
-    # def end_game(self):
-        """Ends the game and allows for no more guesses"""
-        # self._root.unbind("<Key>")
-        # self._root.unbind("<ButtonPress-1>")
-        # self._root.unbind("<ButtonRelease-1>")
-
     def end_screen(self):
         """Displays the end screen with final message or options for the user."""
         
@@ -283,8 +275,9 @@ class WordleGWindow:
         guess_dist_frame.pack(fill='x', padx=10)
         tk.Label(guess_dist_frame, text="GUESS DISTRIBUTION", font=("Helvetica", 14, "bold")).pack()
         
-        # Actual Guess Distribution         
-        self.guess_distribution[self.num_guesses - 1] += 1
+        # Actual Guess Distribution  
+        if(self.num_guesses < 6):
+            self.guess_distribution[self.num_guesses - 1] += 1  
 
         for i, count in enumerate(self.guess_distribution, start=1):
             row = tk.Frame(guess_dist_frame)
@@ -292,6 +285,10 @@ class WordleGWindow:
             tk.Label(row, text=f"{i}", width=2).pack(side='left')
             # Assuming max_guesses is the maximum number of guesses in a game for scaling the bar width
             max_guesses = max(self.guess_distribution) if self.guess_distribution else 1
+
+            if max_guesses == 0:
+                max_guesses = 1
+                
             bar_width = (count / max_guesses) * 400
             tk.Canvas(row, height=20, width=bar_width, bg=KEY_COLOR).pack(side='left')
 
@@ -327,7 +324,6 @@ class WordleGWindow:
     def format_results_for_sharing(self):
 
         """Formats the game results into a string that can be shared."""
-        # Needs actual data                                                                         FIX LATER
         results_data = {
             'played': self.games_played,
             'win_percent': round((self.games_won / self.games_played * 100)) if self.games_played > 0 else 0,
@@ -365,16 +361,8 @@ class WordleGWindow:
         # Clear any displayed messages
         self.show_message("")
 
-        # Rebind key and mouse events to re-enable input                                    FIX LATER
-        # self._root.bind("<Key>", self.key_action)
-        # self._root.bind("<ButtonPress-1>", self.press_action)
-        # self._root.bind("<ButtonRelease-1>", self.release_action)
-
         # Generate a new target word for the next game (adjust based on your game's design)
         self.random_word()
-
-        # Close the end screen window if it's open
-        # self.delete_window()                                                              FIX LATER
 
 
 class WordleSquare:
