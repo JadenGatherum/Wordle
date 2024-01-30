@@ -32,51 +32,50 @@ def wordle():
 
         userGuess = userGuess.upper()
         userList = list(userGuess)
-        countLetterList = []
+        current_row = gw.get_current_row()
 
-        # Counts how many times a letter appears in the random word
+        # Initialize letter count
+        letter_count = {}
         for letter in random_word:
-            letterCount = 0
-            for letter2 in random_word:
-                if (letter == letter2):
-                    letterCount = letterCount + 1
-            countLetterList.append(letterCount)   
+            if letter in letter_count:
+                letter_count[letter] += 1
+            else:
+                letter_count[letter] = 1
 
-        current_row = gw.get_current_row() 
-        
-        randPosition = 0
-        for letter in random_word:
-            foundLetter = False     
+        # Initialize a dictionary to track the most informative color for each key
+        key_colors = {ch: UNKNOWN_COLOR for ch in userGuess}
 
-            # This allows for comparison to start at the exact same spot 
-            userPosition = randPosition
+        # First loop: Identify correct letters
+        for i in range(len(random_word)):
+            if userList[i] == random_word[i]:
+                gw.set_square_color(current_row, i, CORRECT_COLOR)
+                letter_count[userList[i]] -= 1
+                key_colors[userList[i]] = CORRECT_COLOR  # Correct letters override any other color
+            else:
+                gw.set_square_color(current_row, i, UNKNOWN_COLOR)  # Temporarily set to UNKNOWN_COLOR
 
-            # This allows for the one letter of the random word to be compared to every letter in the user's guess by resetting it to the first column, once it hits the 4th
-            for i in range(0, 5, 1):
-                if userPosition >= 5:
-                    userPosition = 0 
-                color = gw.get_square_color(current_row, userPosition)
-                
-                # The foundLetter allows us to move on to the next letter of the random word once it gets a green OR if every letter is unique in the word of the day 
-                # This color thing is for a double letter in the random_word, without this it would replace a green square with a yellow one which is not what we want
-                if not foundLetter and (color != CORRECT_COLOR):
-                    if (letter == userList[userPosition]):
-                        gw.set_square_color(current_row, userPosition, PRESENT_COLOR)
-                        
-                        # Makes sure that every letter is unique in the random word
-                        # If not, then it will move onto the next letter in random word
-                        # This fixes the double letters of a guess 
-                        if countLetterList[randPosition] < 2:
-                            foundLetter = True
-                        
-                        # If the letter matches another one AND is in the same exact spot, then it will turn green
-                        # It will also move onto the next letter in the random word sequence
-                        if (userPosition == randPosition):
-                            gw.set_square_color(current_row, userPosition, CORRECT_COLOR)
-                            foundLetter = True    
-                
-                userPosition = userPosition + 1     # Helps us keep track of which letter we are on in the user's guess
-            randPosition = randPosition + 1         # Helps us keep track of which letter we are on in the random word
+        # Second loop: Handle letters present but in the wrong position
+        for i in range(len(random_word)):
+            if gw.get_square_color(current_row, i) != CORRECT_COLOR:
+                if userList[i] in random_word and letter_count[userList[i]] > 0:
+                    gw.set_square_color(current_row, i, PRESENT_COLOR)
+                    letter_count[userList[i]] -= 1
+                    if key_colors[userList[i]] != CORRECT_COLOR:  # Don't override CORRECT_COLOR
+                        key_colors[userList[i]] = PRESENT_COLOR
+                else:
+                    gw.set_square_color(current_row, i, MISSING_COLOR)
+                    if key_colors[userList[i]] == UNKNOWN_COLOR:  # Only set to MISSING_COLOR if not already determined
+                        key_colors[userList[i]] = MISSING_COLOR
+
+        # Update the on-screen keyboard based on the accumulated key colors
+        for ch, color in key_colors.items():
+            current_key_color = gw.get_key_color(ch)
+            # Ensure CORRECT_COLOR keys are not changed to PRESENT_COLOR
+            if current_key_color != CORRECT_COLOR:
+                gw.set_key_color(ch, color)
+            elif color == MISSING_COLOR and current_key_color != CORRECT_COLOR:
+                # Update the key to MISSING_COLOR only if it's not already set to a more informative color (CORRECT or PRESENT)
+                gw.set_key_color(ch, MISSING_COLOR)
 
         if userGuess == random_word:
             # Update variables
@@ -91,12 +90,6 @@ def wordle():
             gw._root.after(2000, gw.end_screen)
             return
         else:
-            # This fills in all the unknown squares to missing
-            for x in range(5):
-                color = gw.get_square_color(current_row, x)
-                if (color == UNKNOWN_COLOR):
-                    gw.set_square_color(current_row, x, MISSING_COLOR)
-
             gw.next_row()
 
         if current_row >= (N_ROWS - 1):
