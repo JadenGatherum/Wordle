@@ -119,7 +119,7 @@ class WordleGWindow:
                                  MESSAGE_Y)
 
         def key_action(tke):
-
+            keysym = None
             if isinstance(tke, str):
                 ch = tke.upper()
             else:
@@ -247,29 +247,21 @@ class WordleGWindow:
             self._row += 1  # Move to the next row
             self._col = 0  # Reset column index to the start of the row
 
-    # def update_key_colors(self, current_word, user_guesses):                                  CREATE LATER
-
-    # def end_game(self):
-        """Ends the game and allows for no more guesses"""
-        # self._root.unbind("<Key>")
-        # self._root.unbind("<ButtonPress-1>")
-        # self._root.unbind("<ButtonRelease-1>")
-
     def end_screen(self):
         """Displays the end screen with final message or options for the user."""
         
         # Create a new Toplevel window
-        popup = tk.Toplevel(self._root)
-        popup.title("Game Over")
-        popup.geometry("450x350")  # Set the size of the pop-up (width x height)
+        self.popup = tk.Toplevel(self._root)
+        self.popup.title("Game Over")
+        self.popup.geometry("450x350")  # Set the size of the pop-up (width x height)
 
         # Center the pop-up window over the main game window
         x = self._root.winfo_x()
         y = self._root.winfo_y()
-        popup.geometry(f"+{x + 25}+{y + 175}")
+        self.popup.geometry(f"+{x + 25}+{y + 175}")
 
         # Statistics Frame
-        stats_frame = tk.Frame(popup, pady=5)
+        stats_frame = tk.Frame(self.popup, pady=5)
         stats_frame.pack(fill='x', padx=10)
         tk.Label(stats_frame, text="STATISTICS", font=("Helvetica", 14, "bold")).pack()
         
@@ -279,12 +271,13 @@ class WordleGWindow:
         tk.Label(stats_frame, text=stats_text, font=("Helvetica", 10)).pack()
 
         # Guess Distribution Frame
-        guess_dist_frame = tk.Frame(popup, pady=5)
+        guess_dist_frame = tk.Frame(self.popup, pady=5)
         guess_dist_frame.pack(fill='x', padx=10)
         tk.Label(guess_dist_frame, text="GUESS DISTRIBUTION", font=("Helvetica", 14, "bold")).pack()
         
-        # Actual Guess Distribution         
-        self.guess_distribution[self.num_guesses - 1] += 1
+        # Actual Guess Distribution  
+        if(self.num_guesses < 7):
+            self.guess_distribution[self.num_guesses - 1] += 1  
 
         for i, count in enumerate(self.guess_distribution, start=1):
             row = tk.Frame(guess_dist_frame)
@@ -292,11 +285,15 @@ class WordleGWindow:
             tk.Label(row, text=f"{i}", width=2).pack(side='left')
             # Assuming max_guesses is the maximum number of guesses in a game for scaling the bar width
             max_guesses = max(self.guess_distribution) if self.guess_distribution else 1
+
+            if max_guesses == 0:
+                max_guesses = 1
+                
             bar_width = (count / max_guesses) * 400
             tk.Canvas(row, height=20, width=bar_width, bg=KEY_COLOR).pack(side='left')
 
         # Buttons Frame
-        buttons_frame = tk.Frame(popup, pady=10)
+        buttons_frame = tk.Frame(self.popup, pady=10)
         buttons_frame.pack(fill='x', padx=10)
         share_button = tk.Button(buttons_frame, text="Share", bg=CORRECT_COLOR, fg="white", font=("Helvetica", 14, "bold"), command=self.share_results)
         share_button.pack(side='left', expand=True, fill='x', padx=5)
@@ -304,13 +301,13 @@ class WordleGWindow:
         new_game_button.pack(side='left', expand=True, fill='x', padx=5)
 
         # Eventual "Copied to Clipboard" message
-        self.share_message_label = tk.Label(popup, text="", fg="green")
+        self.share_message_label = tk.Label(self.popup, text="", fg="green")
         self.share_message_label.pack()
 
         # Make the pop-up window modal
-        popup.transient(self._root)
-        popup.grab_set()
-        self._root.wait_window(popup)
+        self.popup.transient(self._root)
+        self.popup.grab_set()
+        self._root.wait_window(self.popup)
     
     def share_results(self):
 
@@ -327,7 +324,6 @@ class WordleGWindow:
     def format_results_for_sharing(self):
 
         """Formats the game results into a string that can be shared."""
-        # Needs actual data                                                                         FIX LATER
         results_data = {
             'played': self.games_played,
             'win_percent': round((self.games_won / self.games_played * 100)) if self.games_played > 0 else 0,
@@ -356,6 +352,10 @@ class WordleGWindow:
             for col in range(N_COLS):
                 self.set_square_letter(row, col, " ")
                 self.set_square_color(row, col, UNKNOWN_COLOR)
+
+        # Reset the colors of the on-screen keyboard keys
+        for key in self._keys.values():  # Assuming _keys is a dictionary of key objects
+            key.set_color(KEY_COLOR)  # Adjust UNKNOWN_COLOR to your default key color if different
         
         # Reset any necessary game state variables
         self._row = 0
@@ -365,16 +365,11 @@ class WordleGWindow:
         # Clear any displayed messages
         self.show_message("")
 
-        # Rebind key and mouse events to re-enable input                                    FIX LATER
-        # self._root.bind("<Key>", self.key_action)
-        # self._root.bind("<ButtonPress-1>", self.press_action)
-        # self._root.bind("<ButtonRelease-1>", self.release_action)
-
         # Generate a new target word for the next game (adjust based on your game's design)
         self.random_word()
 
-        # Close the end screen window if it's open
-        # self.delete_window()                                                              FIX LATER
+        # Close the Game Over window
+        self.popup.destroy()
 
 
 class WordleSquare:
@@ -407,7 +402,7 @@ class WordleSquare:
         color = color.upper()
         self._color = color
         fg = "White"
-        if color == UNKNOWN_COLOR:
+        if color == UNKNOWN_COLOR or color == KEY_COLOR:
             fg = "Black"
         self._canvas.itemconfig(self._frame, fill=color)
         self._canvas.itemconfig(self._text, fill=fg)
@@ -460,7 +455,7 @@ class WordleKey:
     def set_color(self, color):
         self._color = color
         fg = "White"
-        if color == UNKNOWN_COLOR:
+        if color == UNKNOWN_COLOR or color == KEY_COLOR:
             fg = "Black"
         self._canvas.itemconfig(self._frame, fill=color)
         self._canvas.itemconfig(self._text, fill=fg)
