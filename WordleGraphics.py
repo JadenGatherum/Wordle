@@ -251,17 +251,17 @@ class WordleGWindow:
         """Displays the end screen with final message or options for the user."""
         
         # Create a new Toplevel window
-        popup = tk.Toplevel(self._root)
-        popup.title("Game Over")
-        popup.geometry("450x350")  # Set the size of the pop-up (width x height)
+        self.popup = tk.Toplevel(self._root)
+        self.popup.title("Game Over")
+        self.popup.geometry("450x350")  # Set the size of the pop-up (width x height)
 
         # Center the pop-up window over the main game window
         x = self._root.winfo_x()
         y = self._root.winfo_y()
-        popup.geometry(f"+{x + 25}+{y + 175}")
+        self.popup.geometry(f"+{x + 25}+{y + 175}")
 
         # Statistics Frame
-        stats_frame = tk.Frame(popup, pady=5)
+        stats_frame = tk.Frame(self.popup, pady=5)
         stats_frame.pack(fill='x', padx=10)
         tk.Label(stats_frame, text="STATISTICS", font=("Helvetica", 14, "bold")).pack()
         
@@ -271,12 +271,12 @@ class WordleGWindow:
         tk.Label(stats_frame, text=stats_text, font=("Helvetica", 10)).pack()
 
         # Guess Distribution Frame
-        guess_dist_frame = tk.Frame(popup, pady=5)
+        guess_dist_frame = tk.Frame(self.popup, pady=5)
         guess_dist_frame.pack(fill='x', padx=10)
         tk.Label(guess_dist_frame, text="GUESS DISTRIBUTION", font=("Helvetica", 14, "bold")).pack()
         
         # Actual Guess Distribution  
-        if(self.num_guesses < 6):
+        if(self.num_guesses < 7):
             self.guess_distribution[self.num_guesses - 1] += 1  
 
         for i, count in enumerate(self.guess_distribution, start=1):
@@ -293,7 +293,7 @@ class WordleGWindow:
             tk.Canvas(row, height=20, width=bar_width, bg=KEY_COLOR).pack(side='left')
 
         # Buttons Frame
-        buttons_frame = tk.Frame(popup, pady=10)
+        buttons_frame = tk.Frame(self.popup, pady=10)
         buttons_frame.pack(fill='x', padx=10)
         share_button = tk.Button(buttons_frame, text="Share", bg=CORRECT_COLOR, fg="white", font=("Helvetica", 14, "bold"), command=self.share_results)
         share_button.pack(side='left', expand=True, fill='x', padx=5)
@@ -301,13 +301,13 @@ class WordleGWindow:
         new_game_button.pack(side='left', expand=True, fill='x', padx=5)
 
         # Eventual "Copied to Clipboard" message
-        self.share_message_label = tk.Label(popup, text="", fg="green")
+        self.share_message_label = tk.Label(self.popup, text="", fg="green")
         self.share_message_label.pack()
 
         # Make the pop-up window modal
-        popup.transient(self._root)
-        popup.grab_set()
-        self._root.wait_window(popup)
+        self.popup.transient(self._root)
+        self.popup.grab_set()
+        self._root.wait_window(self.popup)
     
     def share_results(self):
 
@@ -352,6 +352,10 @@ class WordleGWindow:
             for col in range(N_COLS):
                 self.set_square_letter(row, col, " ")
                 self.set_square_color(row, col, UNKNOWN_COLOR)
+
+        # Reset the colors of the on-screen keyboard keys
+        for key in self._keys.values():  # Assuming _keys is a dictionary of key objects
+            key.set_color(KEY_COLOR)  # Adjust UNKNOWN_COLOR to your default key color if different
         
         # Reset any necessary game state variables
         self._row = 0
@@ -363,6 +367,9 @@ class WordleGWindow:
 
         # Generate a new target word for the next game (adjust based on your game's design)
         self.random_word()
+
+        # Close the Game Over window
+        self.popup.destroy()
 
 
 class WordleSquare:
@@ -395,7 +402,7 @@ class WordleSquare:
         color = color.upper()
         self._color = color
         fg = "White"
-        if color == UNKNOWN_COLOR:
+        if color == UNKNOWN_COLOR or color == KEY_COLOR:
             fg = "Black"
         self._canvas.itemconfig(self._frame, fill=color)
         self._canvas.itemconfig(self._text, fill=fg)
@@ -448,7 +455,7 @@ class WordleKey:
     def set_color(self, color):
         self._color = color
         fg = "White"
-        if color == UNKNOWN_COLOR:
+        if color == UNKNOWN_COLOR or color == KEY_COLOR:
             fg = "Black"
         self._canvas.itemconfig(self._frame, fill=color)
         self._canvas.itemconfig(self._text, fill=fg)
